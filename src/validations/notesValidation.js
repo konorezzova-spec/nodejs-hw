@@ -2,27 +2,14 @@ import { Joi, Segments } from 'celebrate';
 import { isValidObjectId } from 'mongoose';
 import { TAGS } from '../constants/tags.js';
 
-const tags = String(TAGS.map((value) => `'${value}'`).join(', '));
-
 export const getAllNotesSchema = {
   [Segments.QUERY]: Joi.object({
-    page: Joi.number().integer().min(1),
-    perPage: Joi.number().integer().min(5).max(20),
-    tag: Joi.string().valid(
-      'Work',
-      'Personal',
-      'Meeting',
-      'Shopping',
-      'Ideas',
-      'Travel',
-      'Finance',
-      'Health',
-      'Important',
-      'Todo',
-    ),
+    page: Joi.number().integer().min(1).default(1),
+    perPage: Joi.number().integer().min(5).max(20).default(10),
+    tag: Joi.string().valid(...TAGS),
     search: Joi.string().trim().allow(''),
 
-    // sortBy: Joi.string().valid('_id', 'name', 'age', 'avgMark'),
+    // sortBy: Joi.string().valid('_id', 'tag'),
     // sortOrder: Joi.string().valid('asc', 'desc'),
   }),
 };
@@ -47,26 +34,15 @@ export const createNoteSchema = {
       'string.max': 'Title should have at most {#limit} characters',
       'any.required': 'Title is required',
     }),
-    content: Joi.string().min(5).max(65).messages({
+    content: Joi.string().max(65).messages({
       'string.base': 'Content must be a string',
       'string.min': 'Content must be at least {#limit} characters',
       'string.max': 'Content must be at most {#limit} characters',
     }),
     tag: Joi.string()
-      .valid(
-        'Work',
-        'Personal',
-        'Meeting',
-        'Shopping',
-        'Ideas',
-        'Travel',
-        'Finance',
-        'Health',
-        'Important',
-        'Todo',
-      )
+      .valid(...TAGS)
       .messages({
-        'any.only': `Tag must be one of: ${tags}`,
+        'any.only': `Tag must be one of: ${TAGS}`,
       }),
   }),
 };
@@ -77,17 +53,6 @@ export const updateNoteSchema = {
   [Segments.BODY]: Joi.object({
     title: Joi.string().min(1),
     content: Joi.string().allow(''),
-    tag: Joi.string().valid(
-      'Work',
-      'Personal',
-      'Meeting',
-      'Shopping',
-      'Ideas',
-      'Travel',
-      'Finance',
-      'Health',
-      'Important',
-      'Todo',
-    ),
+    tag: Joi.string().valid(...TAGS),
   }).min(1), // важливо: не дозволяємо порожнє тіло
 };

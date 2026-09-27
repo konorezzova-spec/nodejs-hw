@@ -10,8 +10,8 @@ export const getAllNotes = async (req, res) => {
     search,
     // Отримуємо значення параметрів сортування
     // дефолтне сортування по _id
-    sortBy = '_id',
-    sortOrder = 'asc',
+    // sortBy = '_id',
+    // sortOrder = 'asc',
   } = req.query;
 
   const skip = (page - 1) * perPage;
@@ -22,8 +22,10 @@ export const getAllNotes = async (req, res) => {
   // Пошук по частині імені
   if (search) {
     notesQuery.where({
-      title: { $regex: search, $options: 'i' },
-      content: { $regex: search, $options: 'i' },
+      $or: [
+        { title: { $regex: search, $options: 'i' } },
+        { content: { $regex: search, $options: 'i' } },
+      ],
     });
   }
 
@@ -35,11 +37,9 @@ export const getAllNotes = async (req, res) => {
   // Пагінація + сортування
   const [totalNotes, notes] = await Promise.all([
     notesQuery.clone().countDocuments(),
-    notesQuery
-      .skip(skip)
-      .limit(perPage)
-      // Додаємо сортування в ланцюжок методів квері
-      .sort({ [sortBy]: sortOrder }),
+    notesQuery.skip(skip).limit(perPage),
+    // Додаємо сортування в ланцюжок методів квері
+    // .sort({ [sortBy]: sortOrder }),
   ]);
   // Обчислюємо загальну кількість «сторінок»
   const totalPages = Math.ceil(totalNotes / perPage);
