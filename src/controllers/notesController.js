@@ -1,10 +1,56 @@
 import createHttpError from 'http-errors';
 import { Note } from '../models/note.js';
 
-// Список усіх нотатків
 export const getAllNotes = async (req, res) => {
-  const notes = await Note.find();
-  res.status(200).json(notes);
+  // Отримуємо параметри пагінації і задаємо дефолтні значення, а також праментри фільтрації
+  const {
+    page = 1,
+    perPage = 10,
+    tag,
+    search,
+    // Отримуємо значення параметрів сортування
+    // дефолтне сортування по _id
+    sortBy = '_id',
+    sortOrder = 'asc',
+  } = req.query;
+
+  const skip = (page - 1) * perPage;
+
+  // Створюємо базовий запит до колекції
+  const notesQuery = Note.find();
+
+  // Пошук по частині імені
+  if (search) {
+    notesQuery.where({
+      title: { $regex: search, $options: 'i' },
+      content: { $regex: search, $options: 'i' },
+    });
+  }
+
+  // Фільтр за тегом
+  if (tag) {
+    notesQuery.where('tag').equals(tag);
+  }
+
+  // Пагінація + сортування
+  const [totalNotes, notes] = await Promise.all([
+    notesQuery.clone().countDocuments(),
+    notesQuery
+      .skip(skip)
+      .limit(perPage)
+      // Додаємо сортування в ланцюжок методів квері
+      .sort({ [sortBy]: sortOrder }),
+  ]);
+  // Обчислюємо загальну кількість «сторінок»
+  const totalPages = Math.ceil(totalNotes / perPage);
+
+  res.status(200).json({
+    page,
+    perPage,
+    totalNotes,
+    totalPages,
+    notes,
+  });
 };
 
 //одна нотатка за  ідентифікатором:
