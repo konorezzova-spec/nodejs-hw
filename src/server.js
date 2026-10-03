@@ -4,9 +4,11 @@ import 'dotenv/config';
 import { logger } from './middleware/logger.js';
 import { connectMongoDB } from './db/connectMongoDB.js';
 import notesRoutes from './routes/notesRoutes.js';
+import authRoutes from './routes/authRoutes.js';
 import { notFoundHandler } from './middleware/notFoundHandler.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import { errors } from 'celebrate';
+import cookieParser from 'cookie-parser';
 
 const app = express();
 // Використовуємо значення з .env або дефолтний порт 3000
@@ -17,7 +19,9 @@ app.use(logger);
 app.use(express.json());
 // Дозволяє запити з будь-яких джерел
 app.use(cors());
+app.use(cookieParser());
 
+app.use(authRoutes);
 app.use(notesRoutes);
 
 // 404 — якщо маршрут не знайдено
